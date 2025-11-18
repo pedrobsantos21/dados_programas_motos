@@ -1,9 +1,10 @@
-from shiny import App, render, ui
+import streamlit as st
 import pandas as pd
 import geopandas as gpd
 import folium
 from folium import Choropleth
 from folium.features import GeoJsonTooltip
+from streamlit_folium import st_folium
 
 path_sysdata = "data/sysdata.gpkg"
 sysdata = gpd.read_file(path_sysdata)
@@ -246,123 +247,91 @@ tabela_superintendencias_display.columns = [
 ]
 
 
-app_ui = ui.page_sidebar(
-    ui.sidebar(open="closed"),
-    ui.layout_columns(
-        ui.card(
-            ui.card_header("Tabela de Municípios"),
-            ui.output_data_frame("tabela_municipios"),
-            full_screen=True,
-        ),
-        ui.card(
-            ui.card_header("Municípios"),
-            ui.div(
-                ui.output_ui("mapa_municipios"),
-                style="height: 600px; width: 100%; overflow: hidden;",
-            ),
-            full_screen=True,
-        ),
-        col_widths=[6, 6],
-    ),
-    ui.layout_columns(
-        ui.card(
-            ui.card_header("Tabela de Superintendências"),
-            ui.output_data_frame("tabela_superintendencias"),
-            full_screen=True,
-        ),
-        ui.card(
-            ui.card_header("Superintendências"),
-            full_screen=True,
-        ),
-        col_widths=[6, 6],
-    ),
-    title="Programa 'Piloto Consciente SP' - Diagnóstico",
+# Configuração da página
+st.set_page_config(
+    page_title="Programa 'Piloto Consciente SP' - Diagnóstico",
+    layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
+# Título principal
+st.title("Programa 'Piloto Consciente SP' - Diagnóstico")
 
-def server(input, output, session):
-    @render.data_frame
-    def tabela_municipios():
-        return render.DataGrid(
-            tabela_municipios_display,
-            width="100%",
-            filters=True,
-        )
+# Primeira linha: Tabela e Mapa de Municípios
+col1, col2 = st.columns(2)
 
-    @render.data_frame
-    def tabela_superintendencias():
-        return render.DataGrid(
-            tabela_superintendencias_display,
-            width="100%",
-            filters=True,
-        )
+with col1:
+    st.subheader("Tabela de Municípios")
+    st.dataframe(
+        tabela_municipios_display,
+        use_container_width=True,
+        hide_index=True,
+    )
 
-    @render.ui
-    def mapa_municipios():
-        dados_2024 = sysdata[sysdata["ano"] == 2024].copy()
+with col2:
+    st.subheader("Municípios")
+    # Preparar dados para o mapa
+    dados_2024 = sysdata[sysdata["ano"] == 2024].copy()
 
-        taxa_media_por_municipio = (
-            sysdata[sysdata["ano"].isin([2022, 2023, 2024])]
-            .groupby("cod_ibge")["taxa_obitos"]
-            .mean()
-            .reset_index()
-            .rename(columns={"taxa_obitos": "taxa_media"})
-        )
+    taxa_media_por_municipio = (
+        sysdata[sysdata["ano"].isin([2022, 2023, 2024])]
+        .groupby("cod_ibge")["taxa_obitos"]
+        .mean()
+        .reset_index()
+        .rename(columns={"taxa_obitos": "taxa_media"})
+    )
 
-        dados_2024 = dados_2024.merge(
-            taxa_media_por_municipio, on="cod_ibge", how="left"
-        )
-        dados_2024["taxa_media_formatada"] = dados_2024["taxa_media"].round(2)
+    dados_2024 = dados_2024.merge(
+        taxa_media_por_municipio, on="cod_ibge", how="left"
+    )
+    dados_2024["taxa_media_formatada"] = dados_2024["taxa_media"].round(2)
 
-        m = folium.Map(
-            location=[-23.5505, -46.6333],
-            zoom_start=7,
-            tiles="OpenStreetMap",
-        )
+    # Criar mapa Folium
+    m = folium.Map(
+        location=[-23.5505, -46.6333],
+        zoom_start=7,
+        tiles="OpenStreetMap",
+    )
 
-        Choropleth(
-            geo_data=dados_2024.to_json(),
-            data=dados_2024,
-            columns=["cod_ibge", "taxa_obitos"],
-            key_on="feature.properties.cod_ibge",
-            fill_color="Blues",
-            fill_opacity=0.7,
-            line_opacity=0.2,
-            legend_name="Taxa de Óbitos por 100 mil habitantes",
-        ).add_to(m)
+    Choropleth(
+        geo_data=dados_2024.to_json(),
+        data=dados_2024,
+        columns=["cod_ibge", "taxa_obitos"],
+        key_on="feature.properties.cod_ibge",
+        fill_color="Blues",
+        fill_opacity=0.7,
+        line_opacity=0.2,
+        legend_name="Taxa de Óbitos por 100 mil habitantes",
+    ).add_to(m)
 
-        folium.GeoJson(
-            dados_2024.to_json(),
-            style_function=lambda feature: {
-                "fillColor": "transparent",
-                "color": "transparent",
-                "weight": 0,
-            },
-            tooltip=GeoJsonTooltip(
-                fields=["name_muni", "Superintendência", "taxa_media_formatada"],
-                aliases=["Município:", "Superintendência:", "Taxa Média:"],
-                localize=True,
-            ),
-        ).add_to(m)
+    folium.GeoJson(
+        dados_2024.to_json(),
+        style_function=lambda feature: {
+            "fillColor": "transparent",
+            "color": "transparent",
+            "weight": 0,
+        },
+        tooltip=GeoJsonTooltip(
+            fields=["name_muni", "Superintendência", "taxa_media_formatada"],
+            aliases=["Município:", "Superintendência:", "Taxa Média:"],
+            localize=True,
+        ),
+    ).add_to(m)
 
-        html_map = m._repr_html_()
+    # Exibir mapa usando streamlit-folium
+    st_folium(m, width=None, height=600, returned_objects=[])
 
-        html_map = html_map.replace(
-            '<div class="folium-map"',
-            '<div class="folium-map" style="width: 100%; height: 300px; position: relative;"',
-        )
+# Segunda linha: Tabela de Superintendências
+col3, col4 = st.columns(2)
 
-        html_map = html_map.replace(
-            'width="100%"',
-            'width="100%" style="width: 100%; height: 300px; border: none;"',
-        )
+with col3:
+    st.subheader("Tabela de Superintendências")
+    st.dataframe(
+        tabela_superintendencias_display,
+        use_container_width=True,
+        hide_index=True,
+    )
 
-        html_map = html_map.replace(
-            "<style>",
-            "<style>\n.leaflet-bottom.leaflet-right { position: absolute; bottom: 0; right: 0; }\n.leaflet-control { margin-right: 10px; margin-bottom: 10px; }\n.info.legend { bottom: 30px; right: 10px; }\n",
-        )
-
-        return ui.HTML(html_map)
-
-
-app = App(app_ui, server)
+with col4:
+    st.subheader("Superintendências")
+    # Espaço reservado para futuro mapa de superintendências se necessário
