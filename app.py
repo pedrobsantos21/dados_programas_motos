@@ -433,51 +433,206 @@ m_superintendencias = criar_mapa(
 # INTERFACE STREAMLIT
 # ============================================================================
 
-# Configuração da página com tema escuro
+# Configuração da página seguindo padrões DETRAN-SP
 st.set_page_config(
     page_title="Programa 'Piloto Consciente SP' - Diagnóstico",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-# CSS para tema escuro
-# st.markdown(
-#     """
-#     <style>
-#     .stApp {
-#         background-color: #0e1117;
-#     }
-#     .main .block-container {
-#         padding-top: 2rem;
-#     }
-#     </style>
-#     """,
-#     unsafe_allow_html=True,
-# )
+# CSS seguindo padrões visuais do DETRAN-SP
+st.markdown(
+    """
+    <style>
+    /* Importar fonte Open Sans do Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+    
+    /* Aplicar fonte Open Sans globalmente */
+    * {
+        font-family: 'Open Sans', sans-serif !important;
+    }
+    
+    /* Cor de fundo principal */
+    .stApp {
+        background-color: #FFFFFF;
+    }
+    
+    /* Container principal */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 100%;
+    }
+    
+    /* Títulos seguindo padrão DETRAN-SP */
+    h1 {
+        color: #111414;
+        font-weight: 400;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    h2, h3 {
+        color: #111414;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Texto padrão */
+    p, div, span {
+        color: #3A3F51;
+    }
+    
+    /* DataFrames - estilo limpo */
+    .stDataFrame {
+        border: 1px solid #D3D8DB;
+        border-radius: 4px;
+    }
+    
+    /* Tabelas */
+    .stDataFrame table {
+        border-collapse: collapse;
+    }
+    
+    .stDataFrame th {
+        background-color: #F5F5F5;
+        color: #111414;
+        font-weight: 600;
+        border-bottom: 2px solid #D3D8DB;
+    }
+    
+    .stDataFrame td {
+        border-bottom: 1px solid #D3D8DB;
+    }
+    
+    /* Botões */
+    .stButton > button {
+        background-color: #111414;
+        color: #FFFFFF;
+        border-radius: 4px;
+        border: none;
+        font-weight: 600;
+        padding: 0.5rem 1.5rem;
+        transition: background-color 0.3s;
+    }
+    
+    .stButton > button:hover {
+        background-color: #2A2D2D;
+    }
+    
+    /* Links */
+    a {
+        color: #111414;
+        text-decoration: none;
+    }
+    
+    a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Scrollbar customizada */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #F5F5F5;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #D3D8DB;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #B8BEC2;
+    }
+    
+    /* Espaçamento entre seções */
+    .element-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Cabeçalho com logo */
+    .header-container {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem 0;
+        border-bottom: 2px solid #D3D8DB;
+        margin-bottom: 2rem;
+    }
+    
+    .logo-container {
+        display: flex;
+        align-items: center;
+        padding-right: 2rem;
+    }
+    
+    .logo-container img {
+        max-width: 180px;
+        height: auto;
+    }
+    
+    .title-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+    
+    .title-container h1 {
+        margin: 0;
+        padding: 0;
+        font-size: 2rem;
+        font-weight: 400;
+        color: #111414;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-# Título principal
-st.title("Programa 'Piloto Consciente SP' - Diagnóstico")
+# Logo e cabeçalho DETRAN-SP
+st.markdown(
+    """
+    <div class="header-container">
+        <div class="logo-container">
+            <img src="https://www.detran.sp.gov.br/702a783633529610cd8381ac4f5c7b5b.iix" 
+                 alt="DETRAN-SP Logo">
+        </div>
+        <div class="title-container">
+            <h1>Programa 'Piloto Consciente SP' - Diagnóstico</h1>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Tabela de Municípios
-st.subheader("Tabela de Municípios")
-st.dataframe(
-    tabela_municipios_display,
-    width="stretch",
-    hide_index=True,
-)
+with st.expander(
+    label="Tabela de municípios",
+    icon=":material/table:",
+    expanded=False,
+):
+    st.dataframe(
+        tabela_municipios_display,
+        width="stretch",
+        hide_index=True,
+    )
 
 # Mapa de Municípios
-st.subheader("Municípios")
-st_folium(m_municipios, width="stretch")
+with st.expander(label="Mapa de Municípios", expanded=False):
+    st_folium(m_municipios, width="stretch")
 
 # Tabela de Superintendências
-st.subheader("Tabela de Superintendências")
-st.dataframe(
-    tabela_superintendencias_display,
-    width="stretch",
-    hide_index=True,
-)
+with st.expander("Tabela de Superintendências", expanded=False):
+    st.dataframe(
+        tabela_superintendencias_display,
+        width="stretch",
+        hide_index=True,
+    )
 
 # Mapa de Superintendências
-st.subheader("Superintendências")
-st_folium(m_superintendencias, width="stretch")
+with st.expander("Mapa de Superintendências", expanded=False):
+    st_folium(m_superintendencias, width="stretch")
