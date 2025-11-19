@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "folium>=0.20.0",
+    "folium>=0.15.0",
     "geobr>=0.2.2",
     "geopandas>=1.1.0",
     "ipykernel>=7.1.0",
@@ -14,4 +14,5 @@ dependencies = [
     "rich>=14.2.0",
     "streamlit>=1.28.0",
     "streamlit-folium>=0.15.0",
+    "watchdog>=6.0.0",
 ]
