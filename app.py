@@ -6,6 +6,7 @@ import branca.colormap as cm
 from folium.plugins import Fullscreen
 from streamlit_folium import st_folium
 import unicodedata
+import os
 
 # ============================================================================
 # CARREGAMENTO E PREPARAÇÃO DOS DADOS
@@ -38,7 +39,24 @@ def carregar_dados():
 sysdata = carregar_dados()
 sysdata["superintendencia_norm"] = normalize_series(sysdata["Superintendência"])
 
-path_superintendencias_geo = "data/superintendencias_detran.gpkg"
+# Tentar diferentes nomes possíveis para o arquivo de superintendências
+path_superintendencias_geo = None
+possible_paths = [
+    "data/superintendencias_detran.gpkg",
+    "data/Superintendencias_DETRAN.gpkg",
+    "data/Superintendencias_detran.gpkg",
+]
+
+for path in possible_paths:
+    if os.path.exists(path):
+        path_superintendencias_geo = path
+        break
+
+if path_superintendencias_geo is None:
+    raise FileNotFoundError(
+        f"Arquivo de superintendências não encontrado. Procurou em: {possible_paths}"
+    )
+
 geo_superintendencias = gpd.read_file(path_superintendencias_geo)
 geo_superintendencias["superintendencia_norm"] = normalize_series(
     geo_superintendencias["superinten"]
